@@ -1,0 +1,43 @@
+diff --git a/out/platformPackager.js b/out/platformPackager.js
+index 26a1cb8717d9c1162c11d2aeada8f903617e5e8b..7b12f8083e6abd3864ca6cd54d6b4ccdaa2f79e9 100644
+--- a/out/platformPackager.js
++++ b/out/platformPackager.js
+@@ -297,6 +297,15 @@ class PlatformPackager {
+         if (fuses.grantFileProtocolExtraPrivileges != null) {
+             config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges;
+         }
++        if (fuses.disallowCodeGenerationFromStrings != null) {
++            config[FuseV1Options.DisallowCodeGenerationFromStrings] = fuses.disallowCodeGenerationFromStrings;
++        }
++        if (fuses.disableProtoThrow != null) {
++            config[FuseV1Options.DisableProtoThrow] = fuses.disableProtoThrow;
++        }
++        if (fuses.frozenIntrinsics != null) {
++            config[FuseV1Options.FrozenIntrinsics] = fuses.frozenIntrinsics;
++        }
+         return config;
+     }
+     /**
+diff --git a/scheme.json b/scheme.json
+index bc95a5acc49ce81e19ddea7d342ecfb42373a464..36c8f9d467596a525a624ed8284050765dce9461 100644
+--- a/scheme.json
++++ b/scheme.json
+@@ -1567,6 +1567,18 @@
+         "runAsNode": {
+           "description": "The runAsNode fuse toggles whether the `ELECTRON_RUN_AS_NODE` environment variable is respected or not.  Please note that if this fuse is disabled then `process.fork` in the main process will not function as expected as it depends on this environment variable to function. Instead, we recommend that you use [Utility Processes](https://github.com/electron/electron/blob/main/docs/api/utility-process.md), which work for many use cases where you need a standalone Node.js process (like a Sqlite server process or similar scenarios).",
+           "type": "boolean"
++        },
++        "disallowCodeGenerationFromStrings": {
++          "description": "disallowCodeGenerationFromStrings",
++          "type": "boolean"
++        },
++        "disableProtoThrow": {
++          "description": "disallowCodeGenerationFromStrings",
++          "type": "boolean"
++        },
++        "frozenIntrinsics": {
++          "description": "disallowCodeGenerationFromStrings",
++          "type": "boolean"
+         }
+       },
+       "type": "object"

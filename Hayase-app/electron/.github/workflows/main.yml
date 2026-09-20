@@ -1,0 +1,70 @@
+name: Build/release
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Install Setuptools for Python
+        if: matrix.os == 'macos-latest'
+        run: pip3 install setuptools --break-system-packages
+
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          lfs: 'false'
+          token: ${{ secrets.MIRU_SUBMODULES_PAT }}
+    
+      - name: Pull OS-specific LFS files
+        run: |
+          cd electron-dist
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            git lfs pull --include="*win32*.zip"
+          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            git lfs pull --include="*linux*.zip"
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            git lfs pull --include="*darwin*.zip"
+          fi
+        shell: bash
+    
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and Publish
+        if: matrix.os != 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.MIRU_SUBMODULES_PAT }}
+        run: npm run build:publish
+
+      - name: Build and Publish (MacOS)
+        if: matrix.os == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.MIRU_SUBMODULES_PAT }}
+          GH_TOKEN: ${{ secrets.MIRU_SUBMODULES_PAT }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_LINK: ${{ secrets.APPLE_SIGNING_CERT }}
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_SIGNING_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+        run: npm run build:publish

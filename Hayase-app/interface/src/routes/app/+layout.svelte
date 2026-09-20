@@ -1,0 +1,81 @@
+<script lang='ts'>
+  import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
+  import SearchModal from '$lib/components/SearchModal.svelte'
+  import { BannerImage } from '$lib/components/ui/banner'
+  import { Player } from '$lib/components/ui/player'
+  import { Sidebar } from '$lib/components/ui/sidebar'
+  import Sidebarlist from '$lib/components/ui/sidebar/sidebarlist.svelte'
+  import native from '$lib/modules/native'
+  import SUPPORTS from '$lib/modules/settings/supports'
+  import { cn, transferToFileList } from '$lib/utils'
+
+  let currentHash = typeof location !== 'undefined' ? location.hash : ''
+  function onHashChange () {
+    currentHash = typeof location !== 'undefined' ? location.hash : ''
+  }
+
+  if (typeof window !== 'undefined') {
+    (window as any).__hayaseGoto = goto
+  }
+
+  $: isPlayerRoute = $page.route.id === '/app/player' || currentHash.startsWith('#/app/player') || (typeof location !== 'undefined' && location.hash.startsWith('#/app/player'))
+
+  const NAVIGATE_TARGETS = {
+    schedule: 'schedule',
+    anime: 'anime',
+    w2g: 'w2g',
+    debug: 'debug'
+  } as const
+
+  native.navigate(({ target, value }) => {
+    if (!(target in NAVIGATE_TARGETS)) return
+
+    const targetValue = NAVIGATE_TARGETS[target as keyof typeof NAVIGATE_TARGETS]
+    goto(`/#/app/${targetValue}/${value ?? ''}`)
+  })
+
+  const imageRx = /\.(jpeg|jpg|gif|png|webp)/i
+
+  const w2gRx = /hayase\.watch\/\/w2g\/(.+)/
+
+  async function handleTransfer (e: { dataTransfer?: DataTransfer | null, clipboardData?: DataTransfer | null } & Event) {
+    for (const file of await transferToFileList(e)) {
+      if (file instanceof Blob) {
+        if (file.type.startsWith('image') || imageRx.test(file.name)) {
+          goto('/#/app/search', { state: { image: file } })
+        }
+      } else if (file.type === 'text/plain') {
+        if (imageRx.test(file.text)) {
+          goto('/#/app/search', { state: { image: file.text } })
+        } else if (w2gRx.test(file.text)) {
+          const match = file.text.match(w2gRx)
+          if (match?.[1]) goto('/#/app/w2g/' + match[1])
+        }
+      }
+    }
+  }
+</script>
+
+<svelte:window on:hashchange={onHashChange} on:dragover|preventDefault on:drop={handleTransfer} on:paste={handleTransfer} />
+
+<BannerImage class='absolute top-0 left-0' />
+<SearchModal />
+<div class={cn(
+  'flex flex-row grow h-full overflow-clip group/fullscreen min-h-0 z-[1]',
+  isPlayerRoute && 'custom-fullscreen'
+)} id='episodeListTarget'>
+  <Sidebar class={cn(isPlayerRoute && 'hidden')}>
+    <Sidebarlist />
+  </Sidebar>
+  {#if !SUPPORTS.isTV && !SUPPORTS.isTizen && !SUPPORTS.isTizenTV}
+    <Player />
+    <slot />
+  {:else}
+    {#if isPlayerRoute}
+      <Player />
+    {:else}
+      <slot />
+    {/if}
+  {/if}
+</div>

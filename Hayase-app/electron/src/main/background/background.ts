@@ -1,0 +1,49 @@
+import { statSync } from 'node:fs'
+import os from 'node:os'
+import { join } from 'node:path'
+
+// stupid import required because of vite dep resolution
+import '@thaunknown/yencode/y.cjs'
+import { expose } from 'abslink/w3c'
+import { startTVServer } from './tv-server'
+
+import type { ClientSettings } from 'native'
+import type { PROVIDERS } from 'torrent-client/network/doh'
+
+interface Message {
+  id: string
+  data: unknown
+}
+
+let TMP: string
+try {
+  TMP = join(statSync('/tmp') && '/tmp', 'webtorrent')
+} catch (err) {
+  TMP = join(typeof os.tmpdir === 'function' ? os.tmpdir() : '/', 'webtorrent')
+}
+
+let tvServer: ReturnType<typeof startTVServer> | undefined
+
+process.parentPort.on('message', ({ ports, data: _data }) => {
+  let settings: ClientSettings & { path: string, doh?: `https://${keyof typeof PROVIDERS}` } | undefined
+  const { id, data } = _data as Message
+  if (id === 'settings') settings = data as ClientSettings & { path: string }
+  if (id === 'destroy') {
+    tclient?.destroy()
+    tvServer?.close()
+  }
+
+  if (ports[0]) {
+    ports[0].start()
+    tclient ??= new TorrentClient(settings!, TMP)
+    if (settings?.doh) tclient.setDOH(settings.doh)
+    tvServer ??= startTVServer(() => tclient, 9876)
+    // re-exposing leaks memory, but not that much, so it's fine
+    expose(tclient, ports[0] as unknown as MessagePort)
+  } else if (settings) {
+    tclient?.updateSettings(settings)
+  }
+})
+
+let tclient: TorrentClient | undefined
+

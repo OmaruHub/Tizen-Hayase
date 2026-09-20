@@ -1,0 +1,52 @@
+{
+	"name": "website",
+	"version": "1.0.0",
+	"license": "BUSL-1.1",
+	"private": true,
+	"packageManager": "pnpm@9.14.4",
+	"scripts": {
+		"dev": "vite dev --open",
+		"build": "vite build",
+		"preview": "vite preview",
+		"sync": "svelte-kit sync",
+		"check": "svelte-check --threshold error --tsconfig ./tsconfig.web.json",
+		"check:watch": "svelte-check -threshold error --tsconfig ./tsconfig.web.json --watch",
+		"lint": "eslint --quiet -c eslint.config.js",
+		"lint:fix": "eslint --quiet -c eslint.config.js --fix",
+		"gql:turbo": "node ./node_modules/gql.tada/bin/cli.js turbo -c ./tsconfig.web.json",
+		"gql:check": "node ./node_modules/gql.tada/bin/cli.js check -c ./tsconfig.web.json",
+		"gql:generate": "node --experimental-strip-types ./generateALIntrospection.ts"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-static": "^3.0.8",
+		"@sveltejs/kit": "^2.21.0",
+		"@sveltejs/vite-plugin-svelte": "^3.1.2",
+		"autoprefixer": "^10.4.21",
+		"bits-ui": "^0.22.0",
+		"cmdk-sv": "^0.0.19",
+		"eslint-config-standard-universal": "^1.0.8",
+		"svelte": "^4.2.19",
+		"svelte-check": "^4.2.1",
+		"svelte-radix": "^1.1.1",
+		"svelte-sonner": "^0.3.28",
+		"tailwindcss": "^3.4.17",
+		"typescript": "^5.8.3",
+		"vaul-svelte": "^0.3.2",
+		"vite": "^5.4.11"
+	},
+	"type": "module",
+	"dependencies": {
+		"@fontsource-variable/nunito": "^5.2.6",
+		"@prgm/sveltekit-progress-bar": "2.0.0",
+		"clsx": "^2.1.1",
+		"date-fns": "^4.1.0",
+		"debug": "^4.4.1",
+		"events": "^3.3.0",
+		"lucide-svelte": "^0.511.0",
+		"rollup-plugin-license": "^3.6.0",
+		"simple-store-svelte": "^1.0.6",
+		"tailwind-merge": "^3.3.0",
+		"tailwind-variants": "^1.0.0",
+		"uint8-util": "^2.2.6"
+	}
+}

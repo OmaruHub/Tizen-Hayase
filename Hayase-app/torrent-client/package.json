@@ -1,0 +1,48 @@
+{
+	"type": "module",
+	"name": "torrent-client",
+	"private": true,
+	"description": "Webtorrent client for Hayase",
+	"main": "index.ts",
+	"version": "1.0.0",
+	"packageManager": "pnpm@10.28.0",
+	"devDependencies": {
+		"@types/node": "^26.1.2",
+		"eslint-config-standard-universal": "^1.0.10",
+		"protobufjs-cli": "^2.6.1",
+		"typescript": "^5.9.3",
+		"undici-types": "^8.9.0"
+	},
+	"scripts": {
+		"build": "tsc --noEmit",
+		"proto": "pbjs -t static-module -w commonjs -o chromecast/lib/castproto/proto.cjs chromecast/lib/castproto/cast_channel.proto",
+		"protots": "pbts -o chromecast/lib/castproto/proto.d.cts chromecast/lib/castproto/proto.cjs"
+	},
+	"dependencies": {
+		"@silentbot1/nat-api": "^0.4.9",
+		"@thaunknown/yencode": "^1.5.5",
+		"@types/chromecast-caf-receiver": "^6.0.26",
+		"@types/multicast-dns": "^7.2.4",
+		"bencode": "^4.0.1",
+		"bitfield": "^5.0.1",
+		"bittorrent-dht": "^11.0.11",
+		"bittorrent-peerid": "^2.0.2",
+		"bittorrent-protocol": "^5.0.9",
+		"bittorrent-tracker": "^11.2.3",
+		"cross-fetch-ponyfill": "^1.0.3",
+		"debug": "^4.4.3",
+		"ebml-stream": "^1.0.3",
+		"fast-readable-async-iterator": "^2.0.0",
+		"fast-xml-parser": "^5.9.0",
+		"lt_donthave": "^2.0.7",
+		"multicast-dns": "^7.2.5",
+		"native": "github:hayase-app/native",
+		"network-address": "^1.1.2",
+		"nzb-file": "^1.1.18",
+		"nzb-parser": "1.0.4",
+		"parse-torrent": "^11.0.24",
+		"protobufjs": "8.6.2",
+		"uint8-util": "^2.3.2",
+		"webtorrent": "github:thaunknown/webtorrent#aio"
+	}
+}

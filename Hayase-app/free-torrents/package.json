@@ -1,0 +1,7 @@
+{
+  "name": "free-torrents",
+  "version": "1.0.0",
+  "description": "Example extension containing free, public domain torrents.",
+  "main": "index.json",
+  "types": "index.d.ts"
+}

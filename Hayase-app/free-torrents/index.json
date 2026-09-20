@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Example Extension",
+    "id": "free-torrents",
+    "description": "Example extension containing free, public domain torrents.",
+    "version": "0.0.2",
+    "type": "torrent",
+    "accuracy": "low",
+    "ratio": 0,
+    "media": "sub",
+    "languages": [
+      "US"
+    ],
+    "icon": "https://webtorrent.io/img/webtorrent-small.png",
+    "update": "gh:hayase-app/free-torrents",
+    "code": "gh:hayase-app/free-torrents/example"
+  }
+]

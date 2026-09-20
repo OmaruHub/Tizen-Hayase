@@ -1,0 +1,266 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: only dark;
+}
+
+@layer base {
+
+  /* miniplayer thing, required to work with :hover */
+  .paused-show {
+    --padding-right: unset !important;
+    --padding-left: unset !important;
+  }
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 240 10% 3.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 240 4.9% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@font-face {
+  font-family: 'molotregular';
+  src: url('/Molot-webfont-subset.woff') format('woff');
+}
+
+@font-face {
+  font-family: "Twemoji";
+  src: url("/twemoji-subset.woff2") format("woff2");
+}
+
+html,
+body {
+  height: 100vh !important;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+  overscroll-behavior: none;
+  user-select: none;
+  font-family: 'Nunito Variable'
+}
+
+.border-gradient {
+  border-image-source: linear-gradient(90deg, #0000 14%, #38393c, #0000 86%);
+  border-image-slice: 1;
+}
+
+img,
+a {
+  -webkit-user-drag: none;
+}
+
+
+@keyframes load-in {
+  from {
+    transform: translate3d(0, 1.2rem, 0) scale(0.95);
+  }
+
+  to {
+    transform: none
+  }
+}
+
+@keyframes hearbeat {
+  from {
+    transform: translate3d(var(--tw-translate-x), var(--tw-translate-y), 0) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(1) scaleY(1);
+  }
+
+  to {
+    transform: translate3d(var(--tw-translate-x), var(--tw-translate-y), 0) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(0.85) scaleY(0.85);
+  }
+}
+
+.custom-bg {
+  /* this is very hacky, but removes jagged edges */
+  background: repeating-linear-gradient(40deg, #1114 0, #5554 1px, #5554 5px, #1114 6px, #1114 10px);
+  /* repeating-linear-gradient(40deg, #5554 0 5px, #1114 0 10px); */
+}
+
+*:focus-visible {
+  outline: none;
+  border-image: fill 0 linear-gradient(#8883, #8883);
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+.details span+span::before {
+  content: '•';
+  padding: 0 .3rem;
+  font-size: .4rem;
+  align-self: center;
+  white-space: normal;
+  color: #737373 !important;
+}
+
+a[href],
+button,
+fieldset,
+input,
+optgroup,
+option,
+select,
+textarea,
+details,
+[tabindex],
+[contenteditable] {
+  &:active:not([disabled], [type='range'], .no-scale, [tabindex="-1"]) {
+    transition: all 0.1s ease-in-out;
+    transform: scale(0.98);
+  }
+}
+
+.scale-parent:has(.no-scale:active) {
+  transition: all 0.1s ease-in-out;
+  transform: scale(0.98);
+}
+
+.overflow-y-scroll,
+.overflow-y-auto,
+.overflow-x-scroll,
+.overflow-x-auto,
+.overflow-auto,
+.overflow-scroll {
+  will-change: scroll-position;
+}
+
+.bg-url {
+  background-image: var(--bg);
+}
+
+
+.sr-only {
+  display: none !important;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.text-contrast {
+  filter: invert(1) grayscale(1) brightness(1.2) contrast(9000);
+  mix-blend-mode: luminosity;
+  -webkit-font-smoothing: antialiased;
+  background-color: inherit;
+  background-clip: text;
+  color: transparent
+}
+
+.svelte-keybinds {
+  background: black !important;
+}
+
+.svelte-progress-bar {
+  height: 2px !important;
+}
+
+.svelte-progress-bar-leader {
+  height: 4px !important;
+}
+
+.bg-striped {
+  background: repeating-linear-gradient(45deg, #202020, #202020 6px, #2a2a2a 6px, #2a2a2a 12px);
+  background-attachment: fixed;
+  background-size: 119px;
+}
+
+.bg-striped-muted {
+  background: repeating-linear-gradient(45deg, #1e1e1e, #1e1e1e 6px, #161616 6px, #161616 12px);
+  background-attachment: fixed;
+  background-size: 119px;
+}
+
+.font-molot {
+  font-family: 'molotregular';
+}
+
+.font-twemoji {
+  font-family: 'Twemoji';
+}
+
+@-moz-document url-prefix() {
+  .ghost {
+    text-shadow:
+      0.6px 0.6px 0 #3a3a3a,
+      -0.6px 0.6px 0 #3a3a3a,
+      -0.6px -0.6px 0 #3a3a3a,
+      0.6px -0.6px 0 #3a3a3a !important;
+  }
+}

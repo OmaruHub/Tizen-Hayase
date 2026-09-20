@@ -1,0 +1,24 @@
+{
+	"type": "module",
+	"name": "native",
+	"private": true,
+	"description": "Native IPC schema for Hayase",
+	"main": "index.ts",
+	"version": "1.0.0",
+	"devDependencies": {
+		"eslint-config-standard-universal": "^1.0.9",
+		"typescript": "^5.8.3"
+	},
+	"scripts": {
+		"build": "tsc"
+	},
+	"files": [
+		"!**/*.ts",
+		"**/*.js",
+		"**/*.d.ts",
+		"**/*.js.map"
+	],
+	"dependencies": {
+		"@types/chromecast-caf-receiver": "^6.0.26"
+	}
+}

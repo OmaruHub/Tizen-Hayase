@@ -1,0 +1,25 @@
+{
+  "name": "tizen",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build:preload": "esbuild src/preload.ts --bundle --format=iife --target=chrome55 --outfile=dist/tizen-preload.js",
+    "build": "npx tsx build/build.ts",
+    "dev": "esbuild src/preload.ts --bundle --format=iife --target=chrome55 --outfile=dist/tizen-preload.js --watch",
+    "host": "npx tsx src/server/host-server.ts"
+  },
+  "devDependencies": {
+    "@types/chromecast-caf-receiver": "^6.0.26",
+    "@types/node": "^26.5.1",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@types/qrcode": "^1.5.6",
+    "abslink": "^1.2.2",
+    "native": "file:../native",
+    "qrcode": "^1.5.4",
+    "shimport": "^2.0.5"
+  }
+}

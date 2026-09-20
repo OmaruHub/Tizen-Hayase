@@ -1,0 +1,11 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+  xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>Hayase</ShortName>
+  <Description>Search Hayase</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="512" height="512" type="image/png">https://hayase.watch/logo.png</Image>
+  <Url type="text/html" method="get" template="https://hayase.watch/anime/{searchTerms}" />
+  <Url type="application/opensearchdescription+xml" rel="self"
+    template="https://hayase.watch/opensearch.xml" />
+  <moz:SearchForm>https://hayase.watch/anime/</moz:SearchForm>
+</OpenSearchDescription>
