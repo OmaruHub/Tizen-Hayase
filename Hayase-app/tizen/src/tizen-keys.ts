@@ -234,23 +234,36 @@ function handleBackAction(e?: Event) {
     return;
   }
 
-  // 5. If home screen, exit the app
+  // 5. Navigation Back
   const hash = location.hash || '';
   const isHome = hash === '' || hash === '#/' || hash === '#/app/home';
+
   if (isHome) {
-    try {
-      (window as any).tizen?.application?.getCurrentApplication?.()?.exit?.();
-    } catch (err) {
-      console.warn('Failed to exit application', err);
+    if (now - lastHomeBackPress < 2000) {
+      try {
+        (window as any).tizen?.application?.getCurrentApplication?.()?.exit?.();
+      } catch (err) {
+        console.warn('Failed to exit application', err);
+      }
+    } else {
+      lastHomeBackPress = now;
+      try {
+        const toast = document.createElement('div');
+        toast.textContent = 'Press Back again to exit';
+        toast.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:20px;font-size:16px;z-index:999999;pointer-events:none;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 1800);
+      } catch {}
     }
     return;
-  } else {
-    if (history.length > 1) {
-      history.back();
-    } else {
-      location.hash = '#/app/home';
-    }
   }
+
+  // If on episode list / anime page or any subpage, return directly and cleanly to Home screen
+  location.hash = '#/app/home';
+  window.dispatchEvent(new Event('hashchange'));
+  try {
+    (window as any).__hayaseGoto?.('#/app/home');
+  } catch {}
 }
 
 export function initTizenInput() {
@@ -314,32 +327,22 @@ export function initTizenInput() {
         if (candidate) candidate.focus();
       }
 
-      // Reliable Enter handling using click tracking:
-      // If the browser/framework natively fires a click event following Enter keydown,
-      // clickTracked is set to true and we do NOT dispatch a synthetic click (prevents double-click).
-      // If NO click was fired within 35ms (e.g. keydown defaultPrevented by bits-ui, custom div cards,
-      // or links where Chromium doesn't auto-click), we dispatch a synthetic click.
+      // Enter handling:
+      // Standard BUTTON and INPUT elements receive native click from Chromium automatically.
+      // We must NEVER fire synthetic click on BUTTON — doing so causes instant DOUBLE-CLICK (breaking fullscreen, options, etc.).
+      // Non-button elements (custom anime cards, episode divs) do NOT receive native click on Enter, so we click them.
       if (keyCode === TIZEN_KEYS.ENTER) {
-        let clickTracked = false;
-        const onClick = () => { clickTracked = true; };
-        window.addEventListener('click', onClick, { capture: true, once: true });
-
         const target = (document.activeElement && document.activeElement !== document.body)
           ? (document.activeElement as HTMLElement)
           : null;
 
-        if (target) {
+        if (target && target.tagName !== 'BUTTON' && target.tagName !== 'INPUT') {
           setTimeout(() => {
-            window.removeEventListener('click', onClick, { capture: true });
-            if (!clickTracked && document.contains(target)) {
-              console.error('[TV-DEBUG] Dispatching synthetic click on', target.tagName, (target as any).href || target.className?.slice?.(0, 40));
+            if (document.contains(target)) {
+              console.error('[TV-DEBUG] Dispatching synthetic click on non-button:', target.tagName, target.className?.slice?.(0, 40));
               target.click();
             }
-          }, 35);
-        } else {
-          setTimeout(() => {
-            window.removeEventListener('click', onClick, { capture: true });
-          }, 40);
+          }, 20);
         }
       }
       return;
