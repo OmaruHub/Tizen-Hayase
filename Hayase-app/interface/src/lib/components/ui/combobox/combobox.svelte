@@ -92,7 +92,7 @@
     </Button>
   </svelte:fragment>
   <svelte:fragment slot='content' let:triggerId>
-    <Command.Root class={!$breakpoints.md ? 'max-h-none' : ''} onKeydown={navigate}>
+    <Command.Root class={!$breakpoints.md ? 'max-h-none' : ''}>
       {#if !$breakpoints.md}
         <div class='h-0 w-full' tabindex='0' />
       {/if}

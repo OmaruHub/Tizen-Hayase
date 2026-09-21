@@ -15,34 +15,34 @@
   const items = [
     {
       title: 'Player',
-      href: '/#/app/settings/player'
+      href: '#/app/settings/player'
     },
     {
       title: 'Client',
-      href: '/#/app/settings/client'
+      href: '#/app/settings/client'
     },
     {
       title: 'Interface',
-      href: '/#/app/settings/interface'
+      href: '#/app/settings/interface'
     },
     {
       title: 'Extensions',
-      href: '/#/app/settings/extensions'
+      href: '#/app/settings/extensions'
     },
     SUPPORTS.isMobile
       ? undefined
-      : { title: 'Plugins', href: '/#/app/settings/plugins' },
+      : { title: 'Plugins', href: '#/app/settings/plugins' },
     {
       title: 'Accounts',
-      href: '/#/app/settings/accounts'
+      href: '#/app/settings/accounts'
     },
     {
       title: 'App',
-      href: '/#/app/settings/app'
+      href: '#/app/settings/app'
     },
     {
       title: 'Changelog',
-      href: '/#/app/settings/changelog'
+      href: '#/app/settings/changelog'
     }
   ].filter(e => !!e)
 
@@ -88,7 +88,7 @@
         {:else}
           <div>Could not obtain device version</div>
         {/if}
-        <a href='/#/app/license' class='text-foreground underline'>License Information</a>
+        <a href='#/app/license' class='text-foreground underline'>License Information</a>
       </div>
     </aside>
 

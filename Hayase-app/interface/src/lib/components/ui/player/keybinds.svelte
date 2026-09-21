@@ -4,6 +4,7 @@
   import { persisted } from 'svelte-persisted-store'
 
   import { keys, layout, type KeyCode, codeMap, getKeyLabel } from './maps.ts'
+  import { inputType } from '$lib/modules/navigate'
 
   type Bind <T extends Record<string, unknown> = Record<string, unknown>> = T & {
     fn: (e: MouseEvent | KeyboardEvent) => void
@@ -28,6 +29,14 @@
 
   async function runBind (e: MouseEvent | KeyboardEvent, code: KeyCode) {
     if (!code && 'key' in e) code = codeMap[e.key] ?? ''
+
+    // On TV (dpad mode), arrow keys are strictly reserved for spatial D-pad UI navigation
+    if (get(inputType) === 'dpad') {
+      const k = code || (e as KeyboardEvent).key
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(k)) {
+        return
+      }
+    }
 
     const kbn = get(binds)
     if (cnd(code)) {

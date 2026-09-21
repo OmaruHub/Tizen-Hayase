@@ -194,21 +194,6 @@ setInterval(() => {
   }
 }, 15000)
 
-// Listen for remote eval requests from host companion
-if (typeof window !== 'undefined') {
-  window.addEventListener('hayase-server-event', (e: any) => {
-    const { method, params } = e.detail || {}
-    if (method === 'tv.eval' && params?.[0]) {
-      try {
-        const res = eval(params[0])
-        remoteLog('[TV-EVAL-RESULT]', typeof res === 'object' ? JSON.stringify(res) : String(res))
-      } catch (err: any) {
-        remoteLog('[TV-EVAL-ERROR]', err?.message || String(err))
-      }
-    }
-  })
-}
-
 // Prevent navigation to drive root file:/// on local TV environments
 const origReplaceState = history.replaceState.bind(history)
 const origPushState = history.pushState.bind(history)
@@ -365,10 +350,26 @@ if (typeof window !== 'undefined') {
         e.preventDefault()
         e.stopPropagation()
         location.hash = href
+      } else if (href.startsWith('#/')) {
+        e.preventDefault()
+        e.stopPropagation()
+        location.hash = href
+      } else if (href.startsWith('#')) {
+        e.preventDefault()
+        e.stopPropagation()
+        location.hash = href
       } else if (href.startsWith('/app/') || href.startsWith('/setup')) {
         e.preventDefault()
         e.stopPropagation()
         location.hash = '#' + href
+      } else if (href.startsWith('http://') || href.startsWith('https://')) {
+        e.preventDefault()
+        e.stopPropagation()
+        try {
+          (window as any).tizen?.application?.launchAppControl?.(
+            new (window as any).tizen.ApplicationControl('http://tizen.org/appcontrol/operation/view', href)
+          )
+        } catch {}
       }
     }
   }, true)
@@ -605,11 +606,12 @@ function setupTVFocus() {
     root.setAttribute('data-input', 'dpad')
   }
 
+  // Never auto-focus sidebar or menubar
   if (!document.activeElement || document.activeElement === document.body) {
     const candidate = document.querySelector<HTMLElement>(
-      '.group\\/banner button, .cursor-pointer.shrink-0, [tabindex="0"], button:not([disabled]), a[href]:not([disabled])'
+      'main button:not([disabled]):not([tabindex="-1"]), main [tabindex="0"], main a[href]:not([disabled]), .group\\/banner button, #episodeListTarget button, [role="dialog"] button'
     )
-    if (candidate) {
+    if (candidate && !candidate.closest('[data-sidebar-container], [data-sidebar-button], aside, nav, .window-controls')) {
       candidate.focus()
       candidate.classList.add('tv-focused')
       const card = candidate.closest('.item') || candidate.querySelector('.item')
@@ -670,7 +672,9 @@ if (typeof window !== 'undefined') {
     const timer = setInterval(() => {
       setupTVFocus()
       attempts++
-      if (attempts > 20 || (document.activeElement && document.activeElement !== document.body)) {
+      const cur = document.activeElement
+      const isContentFocused = cur && cur !== document.body && !cur.closest?.('[data-sidebar-container], [data-sidebar-button], aside, nav, .window-controls')
+      if (attempts > 30 || isContentFocused) {
         clearInterval(timer)
       }
     }, 250)

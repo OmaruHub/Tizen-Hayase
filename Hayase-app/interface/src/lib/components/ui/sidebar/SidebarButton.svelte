@@ -30,7 +30,10 @@
     e.stopPropagation()
     if (!href) return
 
-    let cleanHash = href.startsWith('/#/') ? href.slice(1) : href.startsWith('#') ? href : '#' + href
+    // Clean href to strictly be '#/route'
+    const route = href.replace(/^[/#]+/, '')
+    let cleanHash = '#/' + route
+
     if (cleanHash === '#/app/settings') {
       cleanHash = '#/app/settings/player'
     } else if (cleanHash === '#/app/profile') {
@@ -40,15 +43,18 @@
     }
 
     console.log('[TV-Sidebar] Navigating to:', cleanHash)
-    location.hash = cleanHash
-    window.dispatchEvent(new Event('hashchange'))
     try {
       goto(cleanHash)
-    } catch {}
+    } catch (err) {
+      console.warn('[TV-Sidebar] goto error:', err)
+      location.hash = cleanHash
+      window.dispatchEvent(new Event('hashchange'))
+    }
   }
 </script>
 
 <Button
+  data-sidebar-button="true"
   variant={isActive ? 'default' : 'ghost'}
   on:click={handleClick}
   class={cn(className, 'px-2 w-10 relative md:pl-4 md:w-12 md:rounded-l-none group/sidebar duration-300 bg-transparent cursor-pointer')}

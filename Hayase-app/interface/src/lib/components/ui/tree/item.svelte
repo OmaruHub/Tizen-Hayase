@@ -1,8 +1,10 @@
 <script lang='ts'>
   import ChevronRight from 'lucide-svelte/icons/chevron-right'
+  import { createEventDispatcher, tick } from 'svelte'
 
   import { getMenuContext, getLevelContext } from './context.ts'
 
+  const dispatch = createEventDispatcher<{ click: MouseEvent | undefined }>()
   const { state, setActive, setInactive } = getMenuContext()
   const levelStore = getLevelContext()
 
@@ -17,18 +19,16 @@
 
   $: activeSibling = $state[level]
 
-  $: hasSub = $$slots.trigger
-
-  import { tick } from 'svelte'
+  $: hasSub = Boolean($$slots.trigger)
 
   let container: HTMLDivElement
   let buttonEl: HTMLButtonElement
 
   async function handleClick (e?: MouseEvent) {
-    if (e) {
-      e.stopPropagation()
-    }
     if (hasSub) {
+      if (e) {
+        e.stopPropagation()
+      }
       if (isActive) {
         setInactive(level)
       } else {
@@ -43,10 +43,17 @@
       }
     } else {
       setInactive(level)
+      dispatch('click', e)
     }
   }
 
   function handleKeydown (e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      e.preventDefault()
+      e.stopPropagation()
+      handleClick()
+      return
+    }
     if (e.key === 'ArrowLeft') {
       if (level > 0) {
         e.preventDefault()
@@ -70,7 +77,6 @@
     bind:this={buttonEl}
     on:keydown={handleKeydown}
     on:click={handleClick}
-    on:click
     class:!bg-primary={isActive || active} class:!text-background={isActive || active}
     class:opacity-30={activeSibling}
     data-open={isActive}>
@@ -80,7 +86,6 @@
     {:else}
       <slot />
     {/if}
-
   </button>
 
   {#if showSubmenu && hasSub}

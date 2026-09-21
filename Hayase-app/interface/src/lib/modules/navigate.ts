@@ -232,11 +232,22 @@ function getElementPosition (element: HTMLElement): ElementPosition {
  */
 function getFocusableElementPositions (): ElementPosition[] {
   const elements = []
-  const root = document.querySelector('[role="dialog"]') ?? document.querySelector('[role="application"]') ?? document.body
+  const isPlayer = typeof location !== 'undefined' && location.hash.includes('/app/player')
+  let root: Element = document.body
+  const dialog = document.querySelector('[role="dialog"]')
+  if (dialog) {
+    root = dialog
+  } else if (isPlayer) {
+    root = document.querySelector('.content-center') || document.getElementById('episodeListTarget') || document.body
+  } else {
+    root = document.querySelector('[role="application"]') ?? document.body
+  }
+
   const candidates = getKeyboardFocusableElements(root)
   for (let i = 0; i < candidates.length; i++) {
     const element = candidates[i]!
     if (element.offsetWidth === 0 && element.offsetHeight === 0) continue
+    if (isPlayer && !dialog && element.closest('[data-sidebar-container], [data-sidebar-button], aside, nav, .window-controls')) continue
     elements.push(getElementPosition(element))
   }
   return elements
@@ -284,8 +295,19 @@ function inInputEl (element: HTMLElement): element is HTMLInputElement {
  */
 function navigateDPad (direction = 'up', e: KeyboardEvent) {
   const keyboardFocusable = getFocusableElementPositions()
+  const isPlayer = typeof location !== 'undefined' && location.hash.includes('/app/player')
 
-  if (!document.activeElement || document.activeElement === document.body) return focusElement((keyboardFocusable.find(({ element }) => isVisible(element)) ?? keyboardFocusable[0])?.element)
+  if (!document.activeElement || document.activeElement === document.body) {
+    if (isPlayer) {
+      const playBtn = document.getElementById('player-play-btn')
+      if (playBtn && isVisible(playBtn)) return focusElement(playBtn)
+    }
+    const contentCandidate = keyboardFocusable.find(({ element }) => {
+      if (!isVisible(element)) return false
+      return !element.closest?.('[data-sidebar-container], [data-sidebar-button], aside, nav, .window-controls')
+    })
+    return focusElement((contentCandidate ?? keyboardFocusable.find(({ element }) => isVisible(element)) ?? keyboardFocusable[0])?.element)
+  }
 
   const currentElement = getElementPosition(document.activeElement as HTMLElement)
 
@@ -394,6 +416,9 @@ let repeatCount = 0
 export function navigate (e: KeyboardEvent) {
   const dir = DirectionKeyMap[e.key] ?? KeyCodeDirectionMap[e.keyCode]
   if (dir) {
+    const active = document.activeElement as HTMLElement | null
+    if (active && active.closest('[data-cmdk-root], [data-cmdk-input]')) return
+
     // responsive repeat rate for TV
     repeatCount = e.repeat ? ++repeatCount % 3 : 0
     e.preventDefault()

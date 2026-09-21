@@ -45,7 +45,7 @@
 
 <svelte:document bind:fullscreenElement />
 
-{#if !SUPPORTS.isAndroid && !SUPPORTS.isIOS}
+{#if !SUPPORTS.isAndroid && !SUPPORTS.isIOS && !SUPPORTS.isTV && !SUPPORTS.isTizen && !SUPPORTS.isTizenTV}
   <Wrapper let:platform>
     {@const isMac = platform === 'macOS'}
     <div class='w-full top-0 z-[2000] flex justify-between {draggable} absolute h-8'>

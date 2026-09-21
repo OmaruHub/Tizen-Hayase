@@ -47,7 +47,7 @@
     </div>
   </div>
 {:else}
-  <div class='w-14 p-2 md:pl-0 flex flex-col z-10 shrink-0 {isHome ? 'bg-background' : '' } gap-2 group-fullscreen/fullscreen:hidden'>
+  <div data-sidebar-container="true" class='w-14 p-2 md:pl-0 flex flex-col z-10 shrink-0 {isHome ? 'bg-background' : '' } gap-2 group-fullscreen/fullscreen:hidden'>
     <slot />
   </div>
 {/if}

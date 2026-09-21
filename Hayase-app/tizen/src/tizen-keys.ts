@@ -139,6 +139,7 @@ async function safeTogglePlay(video: HTMLVideoElement, action: 'play' | 'pause' 
 }
 
 let lastBackTime = 0;
+let lastHomeBackPress = 0;
 
 function handleBackAction(e?: Event) {
   if (e) {
@@ -209,7 +210,7 @@ function handleBackAction(e?: Event) {
   // 2. Close any open modals, dropdowns, or overlays outside player
   // Note: dialog-portal.svelte renders [role="dialog"] conditionally ({#if $api.open}),
   // so its mere presence in the DOM means it IS open — no need for data-state check.
-  const hasModal = document.querySelector('[role="dialog"], [data-vaul-drawer], .sonner-toast');
+  const hasModal = document.querySelector('[role="dialog"], [data-melt-popover-content], [data-popover-content], [data-vaul-drawer], .sonner-toast');
   if (hasModal) {
     const escEvent = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
     (document.activeElement || document.body).dispatchEvent(escEvent);
@@ -319,31 +320,40 @@ export function initTizenInput() {
         } catch {}
       }
 
-      // If activeElement is body or missing on arrow press, focus first element
+      // If activeElement is body or missing on arrow press, focus main content first (never sidebar)
       if (keyCode !== TIZEN_KEYS.ENTER && (!document.activeElement || document.activeElement === document.body)) {
         const candidate = document.querySelector<HTMLElement>(
-          'button:not([disabled]), [tabindex="0"], a[href]:not([disabled]), .cursor-pointer'
+          'main button:not([disabled]):not([tabindex="-1"]), main [tabindex="0"], main a[href]:not([disabled]), .group\\/banner button, #episodeListTarget button, [role="dialog"] button'
+        ) || document.querySelector<HTMLElement>(
+          'button:not([disabled]):not([tabindex="-1"]):not([data-sidebar-button]):not(.close-button), [tabindex="0"]:not([data-sidebar-button]), a[href]:not([disabled]):not([data-sidebar-button])'
         );
-        if (candidate) candidate.focus();
+        if (candidate && !candidate.closest('[data-sidebar-container], [data-sidebar-button], .window-controls')) {
+          candidate.focus();
+        }
       }
 
       // Enter handling:
-      // Standard BUTTON and INPUT elements receive native click from Chromium automatically.
-      // We must NEVER fire synthetic click on BUTTON — doing so causes instant DOUBLE-CLICK (breaking fullscreen, options, etc.).
-      // Non-button elements (custom anime cards, episode divs) do NOT receive native click on Enter, so we click them.
+      // When Enter is pressed on custom non-button, non-link elements (e.g. anime cards, history items),
+      // dispatch synthetic click because div/span elements do not receive native browser click on Enter.
+      // Standard BUTTON and A elements natively fire click (or handle via keywrap) - firing synthetic
+      // click on them causes an instant double-click (e.g. fullscreen toggle, switch toggle-off).
       if (keyCode === TIZEN_KEYS.ENTER) {
-        const target = (document.activeElement && document.activeElement !== document.body)
-          ? (document.activeElement as HTMLElement)
-          : null;
-
-        if (target && target.tagName !== 'BUTTON' && target.tagName !== 'INPUT') {
-          setTimeout(() => {
-            if (document.contains(target)) {
-              console.error('[TV-DEBUG] Dispatching synthetic click on non-button:', target.tagName, target.className?.slice?.(0, 40));
-              target.click();
+        setTimeout(() => {
+          if (!e.defaultPrevented && document.activeElement && document.activeElement !== document.body) {
+            const target = document.activeElement as HTMLElement;
+            if (target.tagName !== 'BUTTON' && target.tagName !== 'A' && target.tagName !== 'INPUT') {
+              if (
+                target.getAttribute('role') === 'button' ||
+                target.getAttribute('tabindex') === '0' ||
+                target.tabIndex === 0 ||
+                target.classList.contains('cursor-pointer') ||
+                target.hasAttribute('data-cmdk-item')
+              ) {
+                target.click();
+              }
             }
-          }, 20);
-        }
+          }
+        }, 15);
       }
       return;
     }

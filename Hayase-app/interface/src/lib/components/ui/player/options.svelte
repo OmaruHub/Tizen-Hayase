@@ -92,8 +92,23 @@
         }
         return s
       })
+      if (popped) {
+        setTimeout(() => {
+          const activeTreeBtn = document.querySelector<HTMLButtonElement>('.options-dialog-content button[data-open="true"], .options-dialog-content button')
+          if (activeTreeBtn) activeTreeBtn.focus()
+        }, 50)
+      }
       return popped
     }
+  }
+
+  $: if (open && typeof window !== 'undefined') {
+    tick().then(() => {
+      setTimeout(() => {
+        const firstBtn = document.querySelector<HTMLButtonElement>('.options-dialog-content button')
+        if (firstBtn) firstBtn.focus()
+      }, 50)
+    })
   }
 </script>
 
