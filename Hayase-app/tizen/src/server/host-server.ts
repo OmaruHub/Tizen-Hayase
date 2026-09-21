@@ -769,6 +769,14 @@ async function handleRPCMessage(
       case 'deleteTorrents':
         result = await tclient.deleteTorrents(params[0])
         break
+      case 'cleanupStreamLeftovers':
+      case 'stopPlayback':
+        if (tclient && typeof (tclient as any).cleanupStreamLeftovers === 'function') {
+          console.log('[TV-Host] Received request to clean up stream leftovers...')
+          await (tclient as any).cleanupStreamLeftovers()
+        }
+        result = true
+        break
       case 'rescanTorrents':
         result = await tclient.rescanTorrents(params[0])
         break
@@ -920,6 +928,13 @@ export function startHostServer(port = DEFAULT_PORT) {
 
   console.log('[TV-Host] Initializing WebTorrent engine...')
   tclient = new TorrentClient(defaultSettings, tmpDir)
+
+  if (!defaultSettings.torrentPersist && typeof (tclient as any).cleanupStreamLeftovers === 'function') {
+    console.log('[TV-Host] Checking and cleaning stream leftovers from previous sessions...')
+    ;(tclient as any).cleanupStreamLeftovers().catch((e: any) => {
+      console.warn('[TV-Host] Initial cleanupStreamLeftovers error:', e?.message)
+    })
+  }
 
   const lanIp = getLocalIP()
 

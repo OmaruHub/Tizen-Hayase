@@ -92,6 +92,9 @@ export const server = new class ServerClient {
 
   stop () {
     this.active.set(Promise.resolve(null as any))
+    if (!get(settings).torrentPersist) {
+      native.cleanupStreamLeftovers?.().catch?.(() => {})
+    }
   }
 
   async updateLibrary () {

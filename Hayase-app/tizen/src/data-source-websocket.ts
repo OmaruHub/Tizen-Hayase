@@ -344,6 +344,10 @@ export class WebSocketDataSource implements DataSource {
     return this.request<void>('debug', [levels])
   }
 
+  async cleanupStreamLeftovers(): Promise<void> {
+    return this.request<void>('cleanupStreamLeftovers', [])
+  }
+
   async destroy(): Promise<void> {
     this.ws.close()
   }

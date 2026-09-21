@@ -38,6 +38,7 @@ export interface DataSource {
   castPlay(host: string, hash: string, id: number, media: any): Promise<void>
   castClose(host: string): Promise<void>
   debug(levels: string): Promise<void>
+  cleanupStreamLeftovers?(): Promise<void>
   destroy(): Promise<void>
 }
 

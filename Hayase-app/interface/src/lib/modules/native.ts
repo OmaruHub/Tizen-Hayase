@@ -179,6 +179,7 @@ export default Object.assign<Native, Partial<Native>>({
   pluginDelete: async () => undefined,
   pluginImport: async () => { throw new Error('Plugins are not supported in this version of Hayase!') },
   pluginList: async () => [],
-  pluginPopup: async () => undefined
+  pluginPopup: async () => undefined,
+  cleanupStreamLeftovers: async () => undefined
   // @ts-expect-error idk
 }, globalThis.native as Partial<Native>)

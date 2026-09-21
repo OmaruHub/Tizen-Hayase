@@ -262,6 +262,13 @@ function exitTvPlayer() {
     }
   } catch {}
 
+  // Clean up streaming leftovers on host server
+  try {
+    if (dataSource && typeof (dataSource as any).cleanupStreamLeftovers === 'function') {
+      (dataSource as any).cleanupStreamLeftovers().catch(() => {})
+    }
+  } catch {}
+
   document.querySelectorAll('.custom-fullscreen').forEach(el => el.classList.remove('custom-fullscreen'))
   document.body.classList.remove('is-fullscreen')
   if (document.fullscreenElement) {
@@ -1035,6 +1042,11 @@ const native: Partial<Native> = {
   deleteTorrents: async (hashes) => dataSource.deleteTorrents(hashes),
   rescanTorrents: async (hashes) => dataSource.rescanTorrents(hashes),
   removeBackgroundTorrents: async (hashes) => dataSource.removeBackgroundTorrents(hashes),
+  cleanupStreamLeftovers: async () => {
+    if (typeof (dataSource as any).cleanupStreamLeftovers === 'function') {
+      await (dataSource as any).cleanupStreamLeftovers()
+    }
+  },
 
   updateSettings: async (settings) => {
     store.set('torrentSettings', settings)

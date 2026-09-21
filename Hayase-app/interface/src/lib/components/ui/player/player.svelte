@@ -254,6 +254,9 @@
       }
       subtitles?.destroy()
     } catch {}
+    if (!get(settings).torrentPersist) {
+      native.cleanupStreamLeftovers?.().catch?.(() => {})
+    }
   })
 
   onMount(() => {

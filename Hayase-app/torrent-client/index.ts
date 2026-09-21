@@ -584,6 +584,57 @@ export default class TorrentClient {
     }
   }
 
+  async cleanupStreamLeftovers () {
+    // 1. Stop all streaming sessions
+    for (const sessionID of [...this.sessions.keys()]) {
+      try {
+        await this.stopSession(sessionID)
+      } catch {}
+    }
+
+    // 2. Remove any non-background, non-persistent torrents from WebTorrent
+    for (const torrent of [...this[client].torrents]) {
+      const isBackground = this.torrentState.get(torrent.infoHash)?.background
+      if (!isBackground && !this.persist) {
+        try {
+          await new Promise(resolve => this[client].remove(torrent, { destroyStore: true }, resolve))
+          this.torrentState.delete(torrent.infoHash)
+        } catch {}
+      }
+    }
+
+    // 3. Clean downloaded files in target path (preserving hayase-cache)
+    try {
+      const fs = await import('node:fs')
+      const p = await import('node:path')
+      const targetDir = this[path]
+      if (targetDir && fs.existsSync(targetDir)) {
+        const entries = fs.readdirSync(targetDir)
+        for (const entry of entries) {
+          if (entry === 'hayase-cache') continue
+          const fullPath = p.join(targetDir, entry)
+          try {
+            fs.rmSync(fullPath, { recursive: true, force: true })
+            console.log(`[TorrentClient] Removed stream leftover: ${entry}`)
+          } catch (err: any) {
+            console.warn(`[TorrentClient] Could not remove ${entry}:`, err?.message)
+          }
+        }
+      }
+      if (this[tmp] && fs.existsSync(this[tmp])) {
+        const tmpEntries = fs.readdirSync(this[tmp])
+        for (const entry of tmpEntries) {
+          const fullPath = p.join(this[tmp], entry)
+          try {
+            fs.rmSync(fullPath, { recursive: true, force: true })
+          } catch {}
+        }
+      }
+    } catch (e: any) {
+      console.warn('[TorrentClient] cleanupStreamLeftovers error:', e?.message)
+    }
+  }
+
   async destroy () {
     await Promise.allSettled([
       this.attachments.destroy(),

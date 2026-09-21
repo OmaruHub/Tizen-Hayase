@@ -218,4 +218,5 @@ export interface Native {
   pluginPopup: (pluginId: string) => Promise<void>
   pluginImport: (id?: string) => Promise<PluginInfo>
   pluginDelete: (id: string) => Promise<void>
+  cleanupStreamLeftovers?: () => Promise<void>
 }
