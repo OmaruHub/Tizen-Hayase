@@ -21,6 +21,16 @@
 
   $: isPlayerRoute = $page.route.id === '/app/player' || currentHash.startsWith('#/app/player') || (typeof location !== 'undefined' && location.hash.startsWith('#/app/player'))
 
+  let wasPlayer = false
+  $: {
+    if (wasPlayer && !isPlayerRoute) {
+      if (SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV) {
+        native.cleanupStreamLeftovers?.().catch?.(() => {})
+      }
+    }
+    wasPlayer = isPlayerRoute
+  }
+
   const NAVIGATE_TARGETS = {
     schedule: 'schedule',
     anime: 'anime',

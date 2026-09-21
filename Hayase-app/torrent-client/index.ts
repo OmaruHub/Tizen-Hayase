@@ -584,16 +584,23 @@ export default class TorrentClient {
     }
   }
 
-  async cleanupStreamLeftovers () {
-    // 1. Stop all streaming sessions
-    for (const sessionID of [...this.sessions.keys()]) {
+  async cleanupStreamLeftovers (preserveHash?: string) {
+    // If not specified, preserve active session hash if available
+    if (!preserveHash && this.sessions.size > 0) {
+      preserveHash = this.sessions.get('tv-session')
+    }
+
+    // 1. Stop non-preserved streaming sessions
+    for (const [sessionID, hash] of [...this.sessions.entries()]) {
+      if (preserveHash && hash === preserveHash) continue
       try {
         await this.stopSession(sessionID)
       } catch {}
     }
 
-    // 2. Remove any non-background, non-persistent torrents from WebTorrent
+    // 2. Remove non-preserved, non-background, non-persistent torrents from WebTorrent
     for (const torrent of [...this[client].torrents]) {
+      if (preserveHash && torrent.infoHash === preserveHash) continue
       const isBackground = this.torrentState.get(torrent.infoHash)?.background
       if (!isBackground && !this.persist) {
         try {
@@ -603,15 +610,26 @@ export default class TorrentClient {
       }
     }
 
-    // 3. Clean downloaded files in target path (preserving hayase-cache)
+    // 3. Clean downloaded files in target path (preserving hayase-cache and preserved torrent files)
     try {
       const fs = await import('node:fs')
       const p = await import('node:path')
       const targetDir = this[path]
+      const preservedNames = new Set<string>(['hayase-cache'])
+      if (preserveHash) {
+        const preservedTorrent = this[client].torrents.find(t => t.infoHash === preserveHash)
+        if (preservedTorrent) {
+          for (const f of preservedTorrent.files) {
+            const topLevel = f.path.split(/[/\\]/)[0]
+            if (topLevel) preservedNames.add(topLevel)
+          }
+        }
+      }
+
       if (targetDir && fs.existsSync(targetDir)) {
         const entries = fs.readdirSync(targetDir)
         for (const entry of entries) {
-          if (entry === 'hayase-cache') continue
+          if (preservedNames.has(entry)) continue
           const fullPath = p.join(targetDir, entry)
           try {
             fs.rmSync(fullPath, { recursive: true, force: true })

@@ -115,10 +115,17 @@
 
   async function play ({ hash, link }: TorrentResult) {
     if (!open) return
+    clearTimeout(autoSelectTimer)
+    animating = false
     server.playHash(hash, $searchStore!.media, $searchStore!.episode, link)
     close()
     await sleep(300)
     navigateToPlayer()
+    if (SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV) {
+      setTimeout(() => {
+        document.getElementById('player-play-btn')?.focus()
+      }, 400)
+    }
   }
 
   async function playBest () {
@@ -163,15 +170,34 @@
   }
 
   let animating = false
+  let autoSelectTimer: any = null
 
   async function startAnimation (searchRes: typeof searchResult) {
     if (!$settings.searchAutoSelect) return
     animating = false
+    clearTimeout(autoSelectTimer)
     const results = await searchRes
-    if (searchRes === searchResult && results && results.results.length) animating = true
+    if (searchRes === searchResult && results && results.results.length) {
+      animating = true
+      if (SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV) {
+        autoSelectTimer = setTimeout(() => {
+          if (animating && open) {
+            playBest()
+          }
+        }, 1500)
+      }
+    }
+  }
+
+  function handleListKeydown (e: KeyboardEvent) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      clearTimeout(autoSelectTimer)
+      animating = false
+    }
   }
 
   function stopAnimation () {
+    clearTimeout(autoSelectTimer)
     animating = false
   }
 
@@ -251,7 +277,7 @@
             Auto Select Torrent
           </ProgressButton>
         </div>
-        <div class='h-full overflow-y-auto px-4 sm:px-6 pt-2' role='menu' tabindex='-1' on:keydown={stopAnimation} on:focusin={stopAnimation} on:pointerenter={stopAnimation} on:pointermove={stopAnimation} use:dragScroll style:--custom={$searchStore.media.coverImage?.color ?? '#fff'} style:--red={r} style:--green={g} style:--blue={b}>
+        <div class='h-full overflow-y-auto px-4 sm:px-6 pt-2' role='menu' tabindex='-1' on:keydown={handleListKeydown} use:dragScroll style:--custom={$searchStore.media.coverImage?.color ?? '#fff'} style:--red={r} style:--green={g} style:--blue={b}>
           {#if $searchStore.media}
             {#each filterAndSortResults(concatResults, inputText, $downloaded) as result (result.hash)}
               <div class='p-3 flex cursor-pointer mb-2 relative rounded-md overflow-hidden bg-muted group/card select:ring-1 select:ring-custom select:bg-accent select:scale-[1.02] select:shadow-lg scale-100 transition-all [content-visibility:auto] [contain-intrinsic-height:auto_106px]'

@@ -772,8 +772,9 @@ async function handleRPCMessage(
       case 'cleanupStreamLeftovers':
       case 'stopPlayback':
         if (tclient && typeof (tclient as any).cleanupStreamLeftovers === 'function') {
-          console.log('[TV-Host] Received request to clean up stream leftovers...')
-          await (tclient as any).cleanupStreamLeftovers()
+          const preserveHash = params[0] as string | undefined
+          console.log('[TV-Host] Received request to clean up stream leftovers...', preserveHash ? `preserving: ${preserveHash}` : '')
+          await (tclient as any).cleanupStreamLeftovers(preserveHash)
         }
         result = true
         break

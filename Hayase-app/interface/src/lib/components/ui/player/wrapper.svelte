@@ -109,7 +109,9 @@
         </div>
       {:then mediaInfo}
         {#if mediaInfo}
-          <Mediahandler {mediaInfo} />
+          {#key (mediaInfo.target?.hash || '') + '_' + (mediaInfo.target?.metadata?.episode || '')}
+            <Mediahandler {mediaInfo} />
+          {/key}
         {/if}
       {/await}
     {/if}

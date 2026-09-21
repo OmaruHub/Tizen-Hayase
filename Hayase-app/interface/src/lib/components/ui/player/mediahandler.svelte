@@ -37,6 +37,9 @@
   }
 
   let current = fileToMedaInfo(mediaInfo.target)
+  $: if (mediaInfo?.target && (current.file.hash !== mediaInfo.target.hash || current.episode !== Number(mediaInfo.target.metadata?.episode))) {
+    current = fileToMedaInfo(mediaInfo.target)
+  }
 
   $: $w2globby?.mediaIndexChanged(mediaInfo.resolvedFiles.indexOf(current.file))
   $: $w2globby?.on('index', index => {
