@@ -78,9 +78,11 @@
   export let screenshot: () => void
 
   $: if (typeof window !== 'undefined') {
-    (window as any).__hayaseIsPlayerOptionsOpen = () => open
-    (window as any).__hayaseClosePlayerOptions = () => { close() }
-    (window as any).__hayaseCollapseTreeSubmenu = () => {
+    // Use DOM as source of truth — avoids reading compiled Svelte reactive getters
+    // from outside Svelte context (which crashes with "_e is not a function")
+    ;(window as any).__hayaseIsPlayerOptionsOpen = () => !!document.querySelector('.options-dialog-content')
+    ;(window as any).__hayaseClosePlayerOptions = () => { close() }
+    ;(window as any).__hayaseCollapseTreeSubmenu = () => {
       if (!open || !treeState) return false
       let popped = false
       treeState.update(s => {

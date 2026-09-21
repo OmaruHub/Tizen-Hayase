@@ -138,6 +138,8 @@ async function safeTogglePlay(video: HTMLVideoElement, action: 'play' | 'pause' 
   }
 }
 
+let lastBackTime = 0;
+
 function handleBackAction(e?: Event) {
   if (e) {
     try {
@@ -146,11 +148,27 @@ function handleBackAction(e?: Event) {
     } catch {}
   }
 
+  const now = Date.now();
+  if (now - lastBackTime < 450) {
+    console.error('[TV-DEBUG] Ignored duplicate Back button within 450ms');
+    return;
+  }
+  lastBackTime = now;
+
+  console.error('[TV-DEBUG] handleBackAction called, hash=', location.hash, 'fullscreenEl=', !!document.fullscreenElement, 'body.is-fullscreen=', document.body.classList.contains('is-fullscreen'));
+
   // 1. If in player (fullscreen or not)
   if (location.hash.includes('/app/player')) {
-    // Check if player options menu or tree is open
-    const isOptionsOpen = typeof (window as any).__hayaseIsPlayerOptionsOpen === 'function' && (window as any).__hayaseIsPlayerOptionsOpen();
-    const optionsDialog = isOptionsOpen || document.querySelector('.options-dialog-content, [role="dialog"][data-state="open"]');
+    // Check if player options menu or tree is open (DOM-based check is crash-safe)
+    let isOptionsOpen = false
+    try {
+      isOptionsOpen = typeof (window as any).__hayaseIsPlayerOptionsOpen === 'function'
+        ? !!(window as any).__hayaseIsPlayerOptionsOpen()
+        : !!document.querySelector('.options-dialog-content')
+    } catch {
+      isOptionsOpen = !!document.querySelector('.options-dialog-content')
+    }
+    const optionsDialog = isOptionsOpen
 
     if (optionsDialog) {
       // First try collapsing a submenu level (e.g. from Audio -> Languages back to Audio root)
@@ -189,7 +207,9 @@ function handleBackAction(e?: Event) {
   }
 
   // 2. Close any open modals, dropdowns, or overlays outside player
-  const hasModal = document.querySelector('[role="dialog"][data-state="open"], [data-vaul-drawer][data-state="open"]');
+  // Note: dialog-portal.svelte renders [role="dialog"] conditionally ({#if $api.open}),
+  // so its mere presence in the DOM means it IS open — no need for data-state check.
+  const hasModal = document.querySelector('[role="dialog"], [data-vaul-drawer], .sonner-toast');
   if (hasModal) {
     const escEvent = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
     (document.activeElement || document.body).dispatchEvent(escEvent);
@@ -223,8 +243,13 @@ function handleBackAction(e?: Event) {
     } catch (err) {
       console.warn('Failed to exit application', err);
     }
+    return;
   } else {
-    history.back();
+    if (history.length > 1) {
+      history.back();
+    } else {
+      location.hash = '#/app/home';
+    }
   }
 }
 
@@ -289,25 +314,33 @@ export function initTizenInput() {
         if (candidate) candidate.focus();
       }
 
-      // Synthetic Enter dispatch: ONLY for non-button, non-link elements (custom div cards)
-      // Standard BUTTON and A elements already receive native browser click on Enter keydown/keyup
+      // Reliable Enter handling using click tracking:
+      // If the browser/framework natively fires a click event following Enter keydown,
+      // clickTracked is set to true and we do NOT dispatch a synthetic click (prevents double-click).
+      // If NO click was fired within 35ms (e.g. keydown defaultPrevented by bits-ui, custom div cards,
+      // or links where Chromium doesn't auto-click), we dispatch a synthetic click.
       if (keyCode === TIZEN_KEYS.ENTER) {
-        setTimeout(() => {
-          if (!e.defaultPrevented && document.activeElement && document.activeElement !== document.body) {
-            const target = document.activeElement as HTMLElement;
-            // CRITICAL: NEVER fire synthetic click on BUTTON or A - it triggers an instant double-click!
-            if (target.tagName !== 'BUTTON' && target.tagName !== 'A') {
-              if (
-                target.getAttribute('role') === 'button' ||
-                target.getAttribute('tabindex') === '0' ||
-                target.tabIndex === 0 ||
-                target.classList.contains('cursor-pointer')
-              ) {
-                target.click();
-              }
+        let clickTracked = false;
+        const onClick = () => { clickTracked = true; };
+        window.addEventListener('click', onClick, { capture: true, once: true });
+
+        const target = (document.activeElement && document.activeElement !== document.body)
+          ? (document.activeElement as HTMLElement)
+          : null;
+
+        if (target) {
+          setTimeout(() => {
+            window.removeEventListener('click', onClick, { capture: true });
+            if (!clickTracked && document.contains(target)) {
+              console.error('[TV-DEBUG] Dispatching synthetic click on', target.tagName, (target as any).href || target.className?.slice?.(0, 40));
+              target.click();
             }
-          }
-        }, 10);
+          }, 35);
+        } else {
+          setTimeout(() => {
+            window.removeEventListener('click', onClick, { capture: true });
+          }, 40);
+        }
       }
       return;
     }

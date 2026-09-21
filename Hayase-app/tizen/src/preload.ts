@@ -254,7 +254,13 @@ function syncTvFullscreenState() {
   }
 }
 
+let lastExitPlayerTime = 0
+
 function exitTvPlayer() {
+  const now = Date.now()
+  if (now - lastExitPlayerTime < 500) return
+  lastExitPlayerTime = now
+
   try {
     const video = document.querySelector('video')
     if (video) {
@@ -271,8 +277,7 @@ function exitTvPlayer() {
     }
   } catch {}
 
-  const target = document.getElementById('episodeListTarget')
-  target?.classList.remove('custom-fullscreen')
+  document.querySelectorAll('.custom-fullscreen').forEach(el => el.classList.remove('custom-fullscreen'))
   document.body.classList.remove('is-fullscreen')
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {})
@@ -292,10 +297,15 @@ function exitTvPlayer() {
     }
   }
 
-  // Navigate using SvelteKit's router so it updates router state and destroys /app/player
-  if (typeof (window as any).__hayaseGoto === 'function') {
-    (window as any).__hayaseGoto(returnRoute, { replaceState: true })
+  // Navigate back to the previous screen (episode list, anime detail, etc.)
+  // The player was navigated to via goto() which pushed a history entry.
+  // Using history.back() lets SvelteKit handle the popstate natively,
+  // avoiding goto() which tries to fetch page data over file:// and causes 403.
+  // We verify there IS a non-player history entry to go back to; if not, fallback to hash.
+  if (lastNonPlayerRoute && lastNonPlayerRoute !== '#/app/home' && history.length > 1) {
+    history.back()
   } else {
+    // Fallback: set hash directly, which triggers SvelteKit's hashchange listener
     location.hash = returnRoute
     window.dispatchEvent(new Event('hashchange'))
   }
