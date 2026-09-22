@@ -238,12 +238,25 @@
     }
   }
 
+  function handleInputKeydown (e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      delete (e.target as HTMLElement)?.dataset?.tvEditing
+      updateName()
+      ;(e.target as HTMLElement)?.blur()
+    }
+  }
+
+  function handleBlur (e: FocusEvent) {
+    delete (e.target as HTMLElement)?.dataset?.tvEditing
+    updateName()
+  }
+
   const viewer = client.client.viewer
 
   let pressed = false
 </script>
 
-<div class='flex flex-col h-full overflow-y-auto overflow-x-clip -ml-14 pl-14 min-w-0 grow' use:dragScroll use:infiniteScroll>
+<main class='flex flex-col h-full overflow-y-auto overflow-x-clip -ml-14 pl-14 min-w-0 grow' use:dragScroll use:infiniteScroll>
   <div class='sticky top-0 z-20 px-2 sm:px-10 pointer-events-auto shrink-0 overflow-clip bg-background pt-5'>
     <div class='flex flex-wrap'>
       {#if !$breakpoints.md}
@@ -256,9 +269,11 @@
               class='pl-9 border-0 select:bg-accent select:text-accent-foreground shadow-sm no-scale placeholder:opacity-50 capitalize'
               placeholder='Any'
               id='animeName' type='text'
+              inputmode='search'
               autocomplete='off'
               on:input={handleInput}
-              on:blur={updateName}
+              on:blur={handleBlur}
+              on:keydown={handleInputKeydown}
               bind:value={inputText} />
             <MagnifyingGlass class='h-4 w-4 shrink-0 opacity-50 absolute left-3 group-focus-within:text-accent-foreground text-muted-foreground z-10 pointer-events-none' />
           </div>
@@ -289,9 +304,11 @@
                 class='pl-9 border-0 select:bg-accent select:text-accent-foreground shadow-sm no-scale placeholder:opacity-50 capitalize'
                 placeholder='Any'
                 id='animeName' type='text'
-                autocomplete='on'
+                inputmode='search'
+                autocomplete='off'
                 on:input={handleInput}
-                on:blur={updateName}
+                on:blur={handleBlur}
+                on:keydown={handleInputKeydown}
                 bind:value={inputText} />
               <MagnifyingGlass class='h-4 w-4 shrink-0 opacity-50 absolute left-3 group-focus-within:text-accent-foreground text-muted-foreground z-10 pointer-events-none' />
             </div>
@@ -378,4 +395,4 @@
       {/if}
     {/each}
   </div>
-</div>
+</main>

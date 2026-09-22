@@ -7,3 +7,6 @@ export const WEB_URL = 'https://hayase.watch'
 export const SETUP_VERSION = 3
 
 export const searchStore = writable<{episode: number, media: Media} | undefined>(undefined)
+if (typeof window !== 'undefined') {
+  (window as any).__hayaseSearchStore = searchStore
+}

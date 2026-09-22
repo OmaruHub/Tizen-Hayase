@@ -89,8 +89,7 @@ export function registerTizenKeys() {
     'ChannelUp',
     'ChannelDown',
     'Info',
-    'Guide',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    'Guide'
   ];
 
   if (typeof (window as any).tizen === 'undefined' || !(window as any).tizen.tvinputdevice) return;
@@ -207,13 +206,27 @@ function handleBackAction(e?: Event) {
     return;
   }
 
+  // 1.5. If an input or textarea is active, blur it first to dismiss the virtual keyboard
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+    try {
+      (document.activeElement as HTMLElement).blur();
+    } catch {}
+    return;
+  }
+
   // 2. Close any open modals, dropdowns, or overlays outside player
   // Note: dialog-portal.svelte renders [role="dialog"] conditionally ({#if $api.open}),
   // so its mere presence in the DOM means it IS open — no need for data-state check.
   const hasModal = document.querySelector('[role="dialog"], [data-melt-popover-content], [data-popover-content], [data-vaul-drawer], .sonner-toast');
   if (hasModal) {
+    const activeTrigger = document.querySelector<HTMLElement>('button[aria-expanded="true"], [role="combobox"][aria-expanded="true"]');
     const escEvent = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
     (document.activeElement || document.body).dispatchEvent(escEvent);
+    if (activeTrigger) {
+      setTimeout(() => {
+        try { activeTrigger.focus(); } catch {}
+      }, 50);
+    }
     return;
   }
 
@@ -323,11 +336,11 @@ export function initTizenInput() {
       // If activeElement is body or missing on arrow press, focus main content first (never sidebar)
       if (keyCode !== TIZEN_KEYS.ENTER && (!document.activeElement || document.activeElement === document.body)) {
         const candidate = document.querySelector<HTMLElement>(
-          'main button:not([disabled]):not([tabindex="-1"]), main [tabindex="0"], main a[href]:not([disabled]), .group\\/banner button, #episodeListTarget button, [role="dialog"] button'
+          'main button:not([disabled]):not([tabindex="-1"]), main input:not([disabled]):not([tabindex="-1"]), main [tabindex="0"], main a[href]:not([disabled]), .group\\/banner button, [role="dialog"] button'
         ) || document.querySelector<HTMLElement>(
-          'button:not([disabled]):not([tabindex="-1"]):not([data-sidebar-button]):not(.close-button), [tabindex="0"]:not([data-sidebar-button]), a[href]:not([disabled]):not([data-sidebar-button])'
+          'button:not([disabled]):not([tabindex="-1"]):not([data-sidebar-button]):not(.close-button), input:not([disabled]):not([tabindex="-1"]), [tabindex="0"]:not([data-sidebar-button]), a[href]:not([disabled]):not([data-sidebar-button])'
         );
-        if (candidate && !candidate.closest('[data-sidebar-container], [data-sidebar-button], .window-controls')) {
+        if (candidate && !candidate.closest('[data-sidebar-container], [data-sidebar-button], .window-controls, .w-14, aside, nav')) {
           candidate.focus();
         }
       }
@@ -341,7 +354,16 @@ export function initTizenInput() {
         setTimeout(() => {
           if (!e.defaultPrevented && document.activeElement && document.activeElement !== document.body) {
             const target = document.activeElement as HTMLElement;
-            if (target.tagName !== 'BUTTON' && target.tagName !== 'A' && target.tagName !== 'INPUT') {
+            if (target.tagName === 'INPUT') {
+              try {
+                target.dataset.tvEditing = 'true';
+                (target as HTMLInputElement).readOnly = false;
+                target.focus();
+                target.click();
+              } catch {}
+              return;
+            }
+            if (target.tagName !== 'BUTTON' && target.tagName !== 'A') {
               if (
                 target.getAttribute('role') === 'button' ||
                 target.getAttribute('tabindex') === '0' ||

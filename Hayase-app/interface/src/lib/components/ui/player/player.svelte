@@ -166,7 +166,7 @@
 
   $: $isPlaying = !paused
 
-  $: buffering = readyState < 3 && !paused
+  $: buffering = readyState < 3 && (!paused || currentTime === 0)
   $: immersed = (!buffering && !paused && !ended && !pictureInPictureElement && !pointerMoving) || fastForwarding
 
   let currentHash = typeof location !== 'undefined' ? location.hash : ''
@@ -180,7 +180,8 @@
   $: if (isPlayer && (SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV)) {
     const target = document.getElementById('episodeListTarget')
     if (target && !target.classList.contains('custom-fullscreen')) {
-      fullscreen()
+      target.classList.add('custom-fullscreen')
+      document.body.classList.add('is-fullscreen')
     }
   }
 
@@ -257,7 +258,13 @@
   })
 
   onMount(() => {
-    if (((SUPPORTS.isMobile && !SUPPORTS.isIPad) || SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV) && !fullscreenElement && !isMiniplayer) fullscreen()
+    if (((SUPPORTS.isMobile && !SUPPORTS.isIPad) || SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV) && !fullscreenElement && !isMiniplayer) {
+      const target = document.getElementById('episodeListTarget')
+      if (target && !target.classList.contains('custom-fullscreen')) {
+        target.classList.add('custom-fullscreen')
+        document.body.classList.add('is-fullscreen')
+      }
+    }
     if (!isMiniplayer) {
       setTimeout(() => {
         document.getElementById('player-play-btn')?.focus()
@@ -406,7 +413,9 @@
   $: handleVisibility(visibilityState)
 
   function autoPlay () {
-    if (!isMiniplayer) video.play()
+    if (!isMiniplayer && video) {
+      video.play()?.catch?.((err: any) => console.warn('[Player] autoPlay failed:', err))
+    }
   }
 
   const interval = setInterval(() => {
@@ -885,7 +894,7 @@
       />
     {/await}
   {:else}
-    <video class='size-full touch-none' preload='metadata' class:cursor-none={immersed} class:cursor-pointer={isMiniplayer} class:object-cover={fitWidth} class:opacity-0={$settings.playerDeband || seeking || pictureInPictureElement} class:absolute={$settings.playerDeband} class:top-0={$settings.playerDeband}
+    <video autoplay class='size-full touch-none' preload='metadata' class:cursor-none={immersed} class:cursor-pointer={isMiniplayer} class:object-cover={fitWidth} class:opacity-0={$settings.playerDeband || seeking || pictureInPictureElement} class:absolute={$settings.playerDeband} class:top-0={$settings.playerDeband}
       use:setSource
       use:setPipVideo={{ subtitles, deband }}
       use:createDeband={$settings.playerDeband}

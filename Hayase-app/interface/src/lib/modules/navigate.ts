@@ -234,8 +234,8 @@ function getFocusableElementPositions (): ElementPosition[] {
   const elements = []
   const isPlayer = typeof location !== 'undefined' && location.hash.includes('/app/player')
   let root: Element = document.body
-  const dialog = document.querySelector('[role="dialog"]')
-  if (dialog) {
+  const dialog = document.querySelector('[role="dialog"], [data-popover-content], [data-melt-popover-content]')
+  if (dialog && (document.activeElement?.closest('[role="dialog"], [data-popover-content], [data-melt-popover-content]') || isVisible(dialog as HTMLElement))) {
     root = dialog
   } else if (isPlayer) {
     root = document.querySelector('.content-center') || document.getElementById('episodeListTarget') || document.body
@@ -313,6 +313,7 @@ function navigateDPad (direction = 'up', e: KeyboardEvent) {
 
   if (inInputEl(currentElement.element)) {
     const input = currentElement.element
+    if (input.dataset.tvEditing === 'true') return
     if (direction === 'left' && input.selectionStart !== 0) return
     if (direction === 'right' && input.selectionEnd !== input.value.length) return
   }
@@ -417,7 +418,8 @@ export function navigate (e: KeyboardEvent) {
   const dir = DirectionKeyMap[e.key] ?? KeyCodeDirectionMap[e.keyCode]
   if (dir) {
     const active = document.activeElement as HTMLElement | null
-    if (active && active.closest('[data-cmdk-root], [data-cmdk-input]')) return
+    if (active && ((active.tagName === 'INPUT' || active.tagName === 'TEXTAREA') && active.dataset.tvEditing === 'true')) return
+    if (active && active.closest('[data-cmdk-input]')) return
 
     // responsive repeat rate for TV
     repeatCount = e.repeat ? ++repeatCount % 3 : 0

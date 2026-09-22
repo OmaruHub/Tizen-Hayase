@@ -6,6 +6,7 @@ import type { ResultOf } from 'gql.tada'
 import type { TorrentFile } from 'native'
 
 import { client, episodes, removeDiacritics, type Media } from '$lib/modules/anilist'
+import { SUPPORTS } from '$lib/modules/settings'
 import { anitomyscript, videoRx } from '$lib/utils'
 
 export type ResolvedFile = TorrentFile & {metadata: { episode: string | number | undefined, parseObject: AnitomyResult, media: Media, failed: boolean }}
@@ -45,11 +46,25 @@ export async function resolveFilesPoorly (promise: Promise<{media: Media, id: st
   const parsedFiles = videoFiles.map((file, i) => ({ file, parseObject: as[i]! })).filter(({ parseObject }) => !TYPE_EXCLUSIONS.includes(parseObject.anime_type[0]?.toUpperCase() ?? '')) // filter out non-episode media
 
   let resolvedFiles: ResolvedFile[] = []
-  if (parsedFiles.length === 1) {
-    resolvedFiles = [{ metadata: { episode: list.episode, media: list.media, failed: false, parseObject: parsedFiles[0]!.parseObject }, ...parsedFiles[0]!.file }]
+  if (parsedFiles.length === 1 || SUPPORTS.isTV || SUPPORTS.isUnderPowered || SUPPORTS.isTizen || SUPPORTS.isTizenTV) {
+    resolvedFiles = parsedFiles.map(({ file, parseObject }) => {
+      const epNum = Number(parseObject.episode_number[0])
+      return {
+        ...file,
+        metadata: {
+          episode: isNaN(epNum) ? list.episode : epNum,
+          parseObject,
+          media: list.media,
+          failed: false
+        }
+      }
+    })
   } else {
     try {
-      resolvedFiles = await AnimeResolver.resolveFileAnime(parsedFiles)
+      resolvedFiles = await Promise.race([
+        AnimeResolver.resolveFileAnime(parsedFiles),
+        new Promise<ResolvedFile[]>((_, reject) => setTimeout(() => reject(new Error('AnimeResolver timeout')), 4000))
+      ])
     } catch (e) {
       console.warn('[Resolver] Failed to resolve anime from AniList, falling back:', e)
       resolvedFiles = await Promise.all(parsedFiles.map(({ file }) => toResolvedFile(file, list.media)))
@@ -71,8 +86,15 @@ export async function resolveFilesPoorly (promise: Promise<{media: Media, id: st
     }
   }
 
+  // Filter to target season if torrent has multiple seasons
+  const seasonMatch = list.media.title?.userPreferred?.match(/season\s*(\d+)|s(\d+)|(\d+)(?:nd|rd|th|st)\s*season/i)
+  const targetSeason = Number(seasonMatch?.[1] || seasonMatch?.[2] || seasonMatch?.[3] || 1)
+  const seasonFiles = targetAnimeFiles.filter(f => Number(f.metadata.parseObject.anime_season[0] || 1) === targetSeason)
+  if (seasonFiles.length > 0) {
+    targetAnimeFiles = seasonFiles
+  }
+
   targetAnimeFiles.sort((a, b) => Number(a.metadata.episode) - Number(b.metadata.episode))
-  targetAnimeFiles.sort((a, b) => Number(b.metadata.parseObject.anime_season[0] ?? 1) - Number(a.metadata.parseObject.anime_season[0] ?? 1))
 
   const targetEpisode = targetAnimeFiles.find(file => file.metadata.episode === list.episode) ?? targetAnimeFiles.find(file => file.metadata.episode === 1) ?? targetAnimeFiles[0] ?? resolvedFiles[0]
 

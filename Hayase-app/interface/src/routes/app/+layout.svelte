@@ -25,7 +25,9 @@
   $: {
     if (wasPlayer && !isPlayerRoute) {
       if (SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV) {
-        native.cleanupStreamLeftovers?.().catch?.(() => {})
+        if (typeof location !== 'undefined' && !location.hash.includes('/app/player')) {
+          native.cleanupStreamLeftovers?.().catch?.(() => {})
+        }
       }
     }
     wasPlayer = isPlayerRoute

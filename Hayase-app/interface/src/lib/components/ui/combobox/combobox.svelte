@@ -23,6 +23,7 @@
   import { Button } from '$lib/components/ui/button'
   import * as Command from '$lib/components/ui/command'
   import { inputType, navigate } from '$lib/modules/navigate'
+  import SUPPORTS from '$lib/modules/settings/supports'
   import { breakpoints, cn } from '$lib/utils.js'
 
   export let items: readonly value[] = []
@@ -38,21 +39,58 @@
 
   export let multiple = false
 
+  $: isTV = Boolean(SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV || $inputType === 'dpad')
   $: selectedValue = value.map(({ label }) => label).join(', ') || placeholder
+
+  let lastTriggerId = ''
+  let wasOpen = false
+
+  function registerTrigger (node: HTMLElement, id: string) {
+    if (id) lastTriggerId = id
+    return {
+      update (newId: string) {
+        if (newId) lastTriggerId = newId
+      }
+    }
+  }
+
+  $: if (open && !wasOpen) {
+    wasOpen = true
+    if (isTV) {
+      tick().then(() => {
+        const container = document.querySelector('[data-popover-content], [data-melt-popover-content], [role="dialog"]')
+        if (container) {
+          const firstItem = container.querySelector<HTMLElement>('[data-cmdk-item]:not([data-disabled])')
+          firstItem?.focus()
+        }
+      })
+    }
+  } else if (!open && wasOpen) {
+    wasOpen = false
+    tick().then(() => {
+      if (lastTriggerId) {
+        document.getElementById(lastTriggerId)?.focus()
+      }
+    })
+  }
 
   // We want to refocus the trigger button when the user selects
   // an item from the list so users can continue navigating the
   // rest of the form with the keyboard.
   function closeAndFocusTrigger (triggerId: string) {
     open = false
+    const idToFocus = triggerId || lastTriggerId
     tick().then(() => {
-      document.getElementById(triggerId)?.focus()
+      if (idToFocus) {
+        document.getElementById(idToFocus)?.focus()
+      }
     })
   }
 
   export let onSelect: (value: value) => void = () => undefined
 
   function handleSelect (selected: value, triggerId: string) {
+    if (triggerId) lastTriggerId = triggerId
     onSelect(selected)
     if (!multiple) {
       value = [selected]
@@ -92,14 +130,17 @@
     </Button>
   </svelte:fragment>
   <svelte:fragment slot='content' let:triggerId>
-    <Command.Root class={!$breakpoints.md ? 'max-h-none' : ''}>
+    <div class='contents' use:registerTrigger={triggerId}>
+      <Command.Root class={!$breakpoints.md ? 'max-h-none' : ''}>
       {#if !$breakpoints.md}
         <div class='h-0 w-full' tabindex='0' />
       {/if}
-      <Command.Input {placeholder} autofocus={false} class='h-9 placeholder:opacity-50' />
+      {#if !isTV}
+        <Command.Input {placeholder} autofocus={false} class='h-9 placeholder:opacity-50' />
+      {/if}
       <Command.List class={!$breakpoints.md ? 'max-h-none flex-1' : ''}>
         <Command.Empty>No results found.</Command.Empty>
-        {#if $inputType === 'dpad'}
+        {#if $inputType === 'dpad' || isTV}
           <Command.Group class='shrink-0' alwaysRender={true}>
             <Command.Item
               alwaysRender={true}
@@ -159,5 +200,6 @@
         {/if}
       </Command.List>
     </Command.Root>
+    </div>
   </svelte:fragment>
 </ComboboxShell>

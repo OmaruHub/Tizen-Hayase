@@ -1,14 +1,16 @@
 <script lang='ts'>
   import * as Dialog from '$lib/components/ui/dialog'
   import * as Popover from '$lib/components/ui/popover'
+  import SUPPORTS from '$lib/modules/settings/supports'
   import { breakpoints, cn, flyAndScale } from '$lib/utils'
 
   export let open = false
   export let portal = '#root'
   export let forcePopover = false
+  $: isTV = Boolean(SUPPORTS.isTV || SUPPORTS.isTizen || SUPPORTS.isTizenTV)
 </script>
 
-{#if $breakpoints.md || forcePopover}
+{#if $breakpoints.md || forcePopover || isTV}
   <Popover.Root bind:open let:ids {portal}>
     <Popover.Trigger asChild let:builder>
       <slot name='trigger' {builder} />
